@@ -1,0 +1,716 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <unordered_set> // Add this line to include <unordered_set>
+#include <algorithm>
+// Your code continues...
+
+
+using namespace std;
+
+// Define classes for Teacher, Classroom, Section, Course, and Student
+class Teacher {
+public:
+    string name;
+    Teacher(string n) : name(n) {}
+};
+
+class Classroom {
+public:
+    string name;
+    Classroom(string n) : name(n) {}
+};
+
+class Section {
+public:
+    string name;
+    vector<string> students; // List of student names
+    Section(string n) : name(n) {}
+    void addStudent(string studentName) {
+        students.push_back(studentName);
+    }
+};
+
+class Course {
+public:
+    string name;
+    Teacher* teacher;
+    Classroom* classroom;
+    Section* section;
+    string day;
+    string time;
+    Course(string n, Teacher* t, Classroom* c, Section* s, string d, string ti) :
+        name(n), teacher(t), classroom(c), section(s), day(d), time(ti) {}
+};
+
+// Define the Timetable class
+class Timetable {
+private:
+    vector<Course*> courses;
+    unordered_map<string, vector<Course*>> studentCourses; // Map student names to courses
+    unordered_map<string, vector<Course*>> teacherCourses; // Map teacher names to courses
+    unordered_map<string, vector<Course*>> roomCourses; // Map room names to courses
+    // Add these member variables to your Timetable class
+    unordered_map<string, Classroom*> classrooms;
+    unordered_map<string, Section*> sections;
+
+public:
+    void addCourse(Course* course) {
+        courses.push_back(course);
+        // Organize courses by student
+        for (const auto& student : course->section->students) {
+            studentCourses[student].push_back(course);
+        }
+        // Organize courses by teacher
+        teacherCourses[course->teacher->name].push_back(course);
+        // Organize courses by room
+        roomCourses[course->classroom->name].push_back(course);
+    }
+
+
+    void displayStudentWiseTimetable() {
+        cout << "Student-wise Timetable:\n";
+        for (const auto& entry : studentCourses) {
+            cout << "Student: " << entry.first << endl;
+            for (Course* course : entry.second) {
+                cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                    << ", Classroom: " << course->classroom->name << ", Section: " << course->section->name
+                    << ", Day: " << course->day << ", Time: " << course->time << endl;
+            }
+            cout << endl;
+        }
+    }
+
+    void displayTeacherWiseTimetable() {
+        cout << "\nTeacher-wise Timetable:\n";
+        for (const auto& entry : teacherCourses) {
+            cout << "Teacher: " << entry.first << endl;
+            for (Course* course : entry.second) {
+                cout << "Course: " << course->name << ", Classroom: " << course->classroom->name
+                    << ", Section: " << course->section->name << ", Day: " << course->day
+                    << ", Time: " << course->time << endl;
+            }
+            cout << endl;
+        }
+    }
+
+    void displayRoomWiseTimetable() {
+        cout << "\nRoom-wise Timetable:\n";
+        for (const auto& entry : roomCourses) {
+            cout << "Room: " << entry.first << endl;
+            for (Course* course : entry.second) {
+                cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                    << ", Section: " << course->section->name << ", Day: " << course->day
+                    << ", Time: " << course->time << endl;
+            }
+            cout << endl;
+        }
+    }
+
+    void displayCoursesOnDayAndTime(string day, string time) {
+        cout << "\nCourses on " << day << " at " << time << ":\n";
+        bool found = false;
+        for (Course* course : courses) {
+            if (course->day == day && course->time == time) {
+                cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                    << ", Classroom: " << course->classroom->name << ", Section: " << course->section->name << endl;
+                found = true;
+            }
+        }
+        if (!found) {
+            cout << "No classes scheduled for " << day << " at " << time << "." << endl;
+        }
+        cout << endl;
+    }
+
+    void displayTimetableForDay(string day) {
+        cout << "\nTimetable for " << day << ":\n";
+        for (Course* course : courses) {
+            if (course->day == day) {
+                cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                    << ", Classroom: " << course->classroom->name << ", Section: " << course->section->name
+                    << ", Time: " << course->time << endl;
+            }
+        }
+        cout << endl;
+    }
+
+    void displayTimetableForStudent(string studentName) {
+        cout << "\nTimetable for student " << studentName << ":\n";
+        if (studentCourses.find(studentName) != studentCourses.end()) {
+            for (Course* course : studentCourses[studentName]) {
+                cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                    << ", Classroom: " << course->classroom->name << ", Section: " << course->section->name
+                    << ", Day: " << course->day << ", Time: " << course->time << endl;
+            }
+        }
+        else {
+            cout << "No classes scheduled for student " << studentName << "." << endl;
+        }
+        cout << endl;
+    }
+
+    void displayTimetableForRoom(string roomName) {
+        cout << "\nTimetable for room " << roomName << ":\n";
+        if (roomCourses.find(roomName) != roomCourses.end()) {
+            for (Course* course : roomCourses[roomName]) {
+                cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                    << ", Section: " << course->section->name << ", Day: " << course->day
+                    << ", Time: " << course->time << endl;
+            }
+        }
+        else {
+            cout << "No classes scheduled for room " << roomName << "." << endl;
+        }
+        cout << endl;
+    }
+    // Function to add a new teacher
+    void addStudent(string studentName, string courseName, string teacherName, string classroomName, string sectionName, string day, string time) {
+        // Create objects for the course, teacher, classroom, and section
+        Teacher* teacher = new Teacher(teacherName);
+        Classroom* classroom = new Classroom(classroomName);
+        Section* section = new Section(sectionName);
+        Course* course = new Course(courseName, teacher, classroom, section, day, time);
+
+        // Add the course and teacher to the timetable
+        addCourse(course);
+
+        // Add the student to the section
+        section->addStudent(studentName); // This line adds the student to the section
+
+        cout << "Student added successfully!\n";
+    }
+    void removeTeacher(const string& teacherName) {
+        auto it = teacherCourses.find(teacherName);
+        if (it != teacherCourses.end()) {
+            // Remove courses associated with the teacher
+            for (Course* course : it->second) {
+                // Remove the course from studentCourses
+                for (auto& studentCourse : studentCourses) {
+                    auto& courses = studentCourse.second;
+                    courses.erase(remove(courses.begin(), courses.end(), course), courses.end());
+                }
+                // Remove the course from roomCourses
+                roomCourses[course->classroom->name].erase(remove(roomCourses[course->classroom->name].begin(), roomCourses[course->classroom->name].end(), course), roomCourses[course->classroom->name].end());
+                // Delete the course object
+                delete course;
+            }
+            // Erase the teacher's courses from the teacherCourses map
+            teacherCourses.erase(it);
+            cout << "Teacher '" << teacherName << "' and associated courses removed successfully.\n";
+        }
+        else {
+            cout << "Teacher '" << teacherName << "' not found.\n";
+        }
+    }
+    void addClassroom(string classroomName) {
+    Classroom* classroom = new Classroom(classroomName);
+    classrooms[classroomName] = classroom;
+    cout << "Classroom '" << classroomName << "' added successfully!\n";
+}
+
+void arrangeNewCourse(string classroomName, string courseName, string teacherName, string sectionName, string day, string time) {
+    // Find the classroom
+    auto it = classrooms.find(classroomName);
+    if (it != classrooms.end()) {
+        // Create objects for the course, teacher, and section
+        Teacher* teacher = new Teacher(teacherName);
+        Section* section = new Section(sectionName);
+        Course* course = new Course(courseName, teacher, it->second, section, day, time);
+
+        // Add the course and teacher to the timetable
+        addCourse(course);
+
+        // Display success message
+        cout << "Course '" << courseName << "' added successfully to classroom '" << classroomName << "'!\n";
+    } else {
+        cout << "Classroom '" << classroomName << "' not found.\n";
+    }
+}
+
+    void addSection(string sectionName) {
+        Section* section = new Section(sectionName);
+        sections[sectionName] = section;
+        cout << "Section '" << sectionName << "' added successfully!\n";
+    }
+    void displaySectionWiseTimetable() {
+        cout << "\nSection-wise Timetable:\n";
+        for (const auto& entry : sections) {
+            cout << "Section: " << entry.first << endl;
+            for (Course* course : courses) {
+                if (course->section->name == entry.first) {
+                    cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                        << ", Classroom: " << course->classroom->name << ", Day: " << course->day
+                        << ", Time: " << course->time << endl;
+                }
+            }
+            cout << endl;
+        }
+    }
+    void removeCourse(Course* course) {
+        auto it = find(courses.begin(), courses.end(), course);
+        if (it != courses.end()) {
+            courses.erase(it);
+            cout << "Course removed successfully.\n";
+        }
+        else {
+            cout << "Course not found.\n";
+        }
+    }
+
+    vector<Course*>& getCourses() {
+        return courses;
+    }
+void removeSection(const string& sectionName) {
+    auto it = sections.find(sectionName);
+    if (it != sections.end()) {
+        // Remove associated courses
+        for (auto itCourse = courses.begin(); itCourse != courses.end();) {
+            if ((*itCourse)->section->name == sectionName) {
+                delete *itCourse; // Delete the course object
+                itCourse = courses.erase(itCourse); // Erase the course and update the iterator
+            } else {
+                ++itCourse;
+            }
+        }
+        // Erase the section from the sections map
+        delete it->second; // Delete the section object
+        sections.erase(it);
+        cout << "Section '" << sectionName << "' and associated courses removed successfully.\n";
+    } else {
+        cout << "Section '" << sectionName << "' not found.\n";
+    }
+}
+
+
+   void removeClassroom(const string& classroomName) {
+    auto it = classrooms.find(classroomName);
+    if (it != classrooms.end()) {
+        Classroom* classroomToRemove = it->second;
+
+        // Remove associated courses
+        for (auto itCourse = courses.begin(); itCourse != courses.end();) {
+            Course* course = *itCourse;
+            if (course->classroom == classroomToRemove) {
+                // Remove the course from studentCourses
+                for (auto& studentCourse : studentCourses) {
+                    auto& courses = studentCourse.second;
+                    courses.erase(remove(courses.begin(), courses.end(), course), courses.end());
+                }
+                // Erase the course from roomCourses
+                roomCourses[course->classroom->name].erase(remove(roomCourses[course->classroom->name].begin(), roomCourses[course->classroom->name].end(), course), roomCourses[course->classroom->name].end());
+                // Delete the course object
+                delete course;
+                // Erase the course from the courses vector
+                itCourse = courses.erase(itCourse);
+            } else {
+                ++itCourse;
+            }
+        }
+
+        // Delete the classroom object
+        delete classroomToRemove;
+        // Erase the classroom from the classrooms map
+        classrooms.erase(it);
+
+        cout << "Classroom '" << classroomName << "' and associated courses removed successfully.\n";
+    } else {
+        cout << "Classroom '" << classroomName << "' not found.\n";
+    }
+}
+
+
+};
+
+int main() {
+    // Create Teachers
+    Teacher* teacherSE1 = new Teacher("Sir Tamim");
+    Teacher* teacherSE2 = new Teacher("Sir Waleed");
+    Teacher* teacherSE3 = new Teacher("Sir Awais");
+    Teacher* teacherSE4 = new Teacher("Ma'am Sadaf");
+    Teacher* teacherSE5 = new Teacher("Sir Adeel");
+    Teacher* teacherSE6 = new Teacher("Sir Zubair");
+    Teacher* teacherSE7 = new Teacher("Ma'am Joddat");
+    Teacher* teacherSE8 = new Teacher("Sir Raja");
+
+    // Create Classrooms
+    Classroom* classroom1 = new Classroom("Room 4-17");
+    Classroom* classroom2 = new Classroom("Room 4-18");
+    Classroom* classroom3 = new Classroom("Room 4-19");
+    Classroom* classroom4 = new Classroom("Lab 4-01");
+    Classroom* classroom5 = new Classroom("Lab 4-02");
+
+    // Create Sections
+    Section* section1 = new Section("A");
+    section1->addStudent("Madeiha");
+    section1->addStudent("Emaan");
+    Section* section2 = new Section("B");
+    section2->addStudent("Afshan");
+    section2->addStudent("Shumail");
+    Section* section3 = new Section("C");
+    section3->addStudent("Asma");
+
+    // Create Courses
+    Course* course1 = new Course("OOP", teacherSE1, classroom1, section1, "Monday", "8:00 AM - 10:00 AM");
+    Course* course2 = new Course("OOP Lab", teacherSE2, classroom4, section1, "Tuesday", "10:00 AM - 12:00 PM");
+    Course* course3 = new Course("ISE", teacherSE3, classroom3, section1, "Wednesday", "2:00 PM - 4:00 PM");
+    Course* course4 = new Course("DS", teacherSE4, classroom1, section2, "Thursday", "12:00 PM - 2:00 PM");
+    Course* course5 = new Course("Calculus", teacherSE5, classroom2, section2, "Friday", "3:00 PM - 5:00 PM");
+    Course* course6 = new Course("LA", teacherSE6, classroom1, section3, "Monday", "10:00 AM - 12:00 PM");
+    Course* course7 = new Course("CF", teacherSE7, classroom3, section3, "Tuesday", "2:00 PM - 4:00 PM");
+    Course* course8 = new Course("CP", teacherSE8, classroom5, section3, "Wednesday", "4:00 PM - 5:00 PM");
+
+    // Create a Timetable and add courses
+    Timetable timetable;
+    timetable.addCourse(course1);
+    timetable.addCourse(course2);
+    timetable.addCourse(course3);
+    timetable.addCourse(course4);
+    timetable.addCourse(course5);
+    timetable.addCourse(course6);
+    timetable.addCourse(course7);
+    timetable.addCourse(course8);
+
+    // Display the timetable student-wise, teacher-wise, and room-wise
+    int choice;
+    do {
+        cout << "\nMenu:\n";
+        cout << "1. Display Student-wise Timetable\n";
+        cout << "2. Display Teacher-wise Timetable\n";
+        cout << "3. Display Room-wise Timetable\n";
+        cout << "4. Display Courses on a Specific Day and Time\n";
+        cout << "5. Display Timetable for a Specific Day\n";
+        cout << "6. Display Timetable for a Specific Student\n";
+        cout << "7. Display Timetable for a Specific Room\n";
+        cout << "8. Add Teacher\n";
+        cout << "9. Add Student\n";
+        cout << "10. Remove Teacher\n";
+        cout << "11. Add Classroom\n";
+        cout << "12. Add Section\n";
+        cout << "13. Display Section-wise Timetable\n";
+        cout << "14. Arrange New Course\n";
+        cout << "15. Remove section\n";
+        cout << "16. Remove classroom\n";
+        cout << "17. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+        switch (choice) {
+        case 1:
+            timetable.displayStudentWiseTimetable();
+            break;
+        case 2:
+            timetable.displayTeacherWiseTimetable();
+            break;
+        case 3:
+            timetable.displayRoomWiseTimetable();
+            break;
+case 4: {
+    string day, time;
+    cout << "Enter the day (e.g., Monday): ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, day);
+    cout << "Enter the time (e.g., 8:00 AM): ";
+    getline(cin, time);
+    timetable.displayCoursesOnDayAndTime(day, time);
+    break;
+}
+
+case 5: {
+    string day;
+    cout << "Enter the day (e.g., Monday): ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, day);
+    timetable.displayTimetableForDay(day);
+    break;
+}
+
+case 6: {
+    string studentName;
+    cout << "Enter student name: ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, studentName);
+    timetable.displayTimetableForStudent(studentName);
+    break;
+}
+
+case 7: {
+    string roomName;
+    cout << "Enter room number (e.g., 4-17): ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, roomName);
+    timetable.displayTimetableForRoom(roomName);
+    break;
+}
+
+case 8: {
+    string teacherName, courseName, classroomName, sectionName, day, time;
+    cout << "Enter teacher name: ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, teacherName);
+    cout << "Enter course name: ";
+    getline(cin, courseName);
+    cout << "Enter classroom name: ";
+    getline(cin, classroomName);
+    cout << "Enter section name: ";
+    getline(cin, sectionName);
+    cout << "Enter day (e.g., Monday): ";
+    getline(cin, day);
+    cout << "Enter time (e.g., 8:00 AM - 10:00 AM): ";
+    getline(cin, time);
+
+    // Create objects for the course, teacher, classroom, and section
+    Teacher* teacher = new Teacher(teacherName);
+    Classroom* classroom = new Classroom(classroomName);
+    Section* section = new Section(sectionName);
+    Course* course = new Course(courseName, teacher, classroom, section, day, time);
+
+    // Add the course and teacher to the timetable
+    timetable.addCourse(course);
+
+    cout << "Teacher '" << teacherName << "' and associated course added successfully!\n";
+    break;
+}
+
+        case 9: {
+    string studentName, courseName;
+    cout << "Enter student name: ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, studentName);
+    cout << "Enter course name: ";
+    getline(cin, courseName);
+
+    // Find the course based on the input course name
+    Course* selectedCourse = nullptr;
+    for (Course* course : timetable.getCourses()) {
+        if (course->name == courseName) {
+            selectedCourse = course;
+            break;
+        }
+    }
+
+    if (selectedCourse) {
+        // Display corresponding information like teacher, day, and timings
+        cout << "Course: " << selectedCourse->name << ", Teacher: " << selectedCourse->teacher->name
+             << ", Classroom: " << selectedCourse->classroom->name << ", Day: " << selectedCourse->day
+             << ", Time: " << selectedCourse->time << endl;
+
+        // Add the student to the section of the selected course
+        selectedCourse->section->addStudent(studentName);
+        cout << "Student '" << studentName << "' added to the course successfully!\n";
+    } else {
+        cout << "Course '" << courseName << "' not found.\n";
+    }
+    break;
+}
+
+        case 10: {
+    string teacherName;
+    cout << "Enter teacher name: ";
+    cin.ignore(); // to clear the input buffer
+    getline(cin, teacherName); // read the entire line
+    timetable.removeTeacher(teacherName);
+    break;
+}
+
+    case 11: {
+    string classroomName;
+    cout << "Enter classroom name: ";
+    cin.ignore(); // Clear the input buffer
+    getline(cin, classroomName);
+    timetable.addClassroom(classroomName);
+    // Add course details for the classroom
+    string courseName, teacherName, sectionName, day, time;
+    cout << "Enter course name: ";
+    getline(cin, courseName);
+    cout << "Enter teacher name: ";
+    getline(cin, teacherName);
+    cout << "Enter section name: ";
+    getline(cin, sectionName);
+    cout << "Enter day (e.g., Monday): ";
+    getline(cin, day);
+    cout << "Enter time (e.g., 8:00 AM - 10:00 AM): ";
+    getline(cin, time);
+    // Assuming the student name is the same as the classroom name for simplicity
+    timetable.arrangeNewCourse(classroomName, courseName, teacherName, sectionName, day, time);
+    break;
+}
+
+case 12: {
+    string sectionName, courseName;
+    cout << "Enter section name: ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, sectionName);
+    cout << "Enter course name: ";
+    getline(cin, courseName);
+
+    // Find the course based on the input course name
+    Course* selectedCourse = nullptr;
+    for (Course* course : timetable.getCourses()) {
+        if (course->name == courseName) {
+            selectedCourse = course;
+            break;
+        }
+    }
+
+    if (selectedCourse) {
+        // Add the section to the timetable
+        timetable.addSection(sectionName);
+
+        // Display corresponding information like teacher, day, and timings
+        cout << "Course: " << selectedCourse->name << ", Teacher: " << selectedCourse->teacher->name
+             << ", Classroom: " << selectedCourse->classroom->name << ", Day: " << selectedCourse->day
+             << ", Time: " << selectedCourse->time << endl;
+
+        // Add the student to the section of the selected course
+        selectedCourse->section->name = sectionName;
+        cout << "Section '" << sectionName << "' added successfully!\n";
+    } else {
+        cout << "Course '" << courseName << "' not found.\n";
+    }
+    break;
+}
+
+case 13: {
+    cout << "\nTimetable for all sections:\n";
+    bool sectionFound = false;
+    unordered_set<string> sectionNames;
+
+    // Collect all section names
+    for (const auto& entry : timetable.getCourses()) {
+        sectionNames.insert(entry->section->name);
+    }
+
+    // Display timetable for each section
+    for (const auto& sectionName : sectionNames) {
+        cout << "\nTimetable for section " << sectionName << ":\n";
+        for (Course* course : timetable.getCourses()) {
+            if (course->section->name == sectionName) {
+                cout << "Course: " << course->name << ", Teacher: " << course->teacher->name
+                    << ", Classroom: " << course->classroom->name << ", Day: " << course->day
+                    << ", Time: " << course->time << endl;
+                sectionFound = true;
+            }
+        }
+    }
+
+    if (!sectionFound) {
+        cout << "No sections found.\n";
+    }
+
+    break;
+}
+
+
+
+case 14: {
+    string courseName1, courseName2;
+    cout << "Enter the name of the first course: ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, courseName1);
+    cout << "Enter the name of the second course: ";
+    getline(cin, courseName2);
+
+    // Find courses by name
+    Course* course1 = nullptr;
+    Course* course2 = nullptr;
+
+    // Find course 1
+    for (Course* course : timetable.getCourses()) {
+        if (course->name == courseName1) {
+            course1 = course;
+            break;
+        }
+    }
+
+    // Find course 2
+    for (Course* course : timetable.getCourses()) {
+        if (course->name == courseName2) {
+            course2 = course;
+            break;
+        }
+    }
+
+    if (course1 && course2) {
+        // Swap room numbers
+        string tempRoom = course1->classroom->name;
+        course1->classroom->name = course2->classroom->name;
+        course2->classroom->name = tempRoom;
+
+        cout << "Room numbers for courses " << courseName1 << " and " << courseName2 << " swapped successfully!\n";
+    } else {
+        cout << "One or both of the courses were not found.\n";
+    }
+    break;
+}
+case 15: {
+    string sectionToRemove;
+    cout << "Enter section name to remove: ";
+    cin.ignore(); // Clear the input buffer
+    getline(cin, sectionToRemove);
+
+    // Trim leading and trailing whitespace from section name
+    sectionToRemove.erase(0, sectionToRemove.find_first_not_of(" \t"));
+    sectionToRemove.erase(sectionToRemove.find_last_not_of(" \t") + 1);
+
+    // Check if section name is empty
+    if (sectionToRemove.empty()) {
+        cout << "Invalid section name. Please try again.\n";
+        break;
+    }
+
+    // Remove section and associated courses
+    timetable.removeSection(sectionToRemove);
+    break;
+}
+
+case 16: {
+    string classroomToRemove;
+    cout << "Enter classroom name to remove: ";
+    cin.ignore(); // Clear the newline character
+    getline(cin, classroomToRemove);
+    timetable.removeClassroom(classroomToRemove);
+    break;
+}
+
+
+
+
+
+        case 17:
+            cout << "Exiting program.\n";
+            break;
+        default:
+            cout << "Invalid choice. Please try again.\n";
+        }
+    } while (choice != 17);
+
+
+    // Clean up memory
+    delete teacherSE1;
+    delete teacherSE2;
+    delete teacherSE3;
+    delete teacherSE4;
+    delete teacherSE5;
+    delete teacherSE6;
+    delete teacherSE7;
+    delete teacherSE8;
+    delete classroom1;
+    delete classroom2;
+    delete classroom3;
+    delete classroom4;
+    delete classroom5;
+    delete section1;
+    delete section2;
+    delete section3;
+    delete course1;
+    delete course2;
+    delete course3;
+    delete course4;
+    delete course5;
+    delete course6;
+    delete course7;
+    delete course8;
+
+    return 0;
+}
